@@ -16,4 +16,5 @@ body {background="purple";}
 </html>' index.html",
       "sudo mv index.html /var/www/html/"
     ]
+ }
     
