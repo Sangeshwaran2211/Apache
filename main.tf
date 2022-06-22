@@ -1,9 +1,9 @@
- provider "aws" {
+provider "aws" {
   region = "ap-southeast-1"
 }
 
 resource "aws_vpc" "myvpc" {
-  cidr_block       = "10.0.0.0/16"
+  cidr_block       = var.myvpc
   instance_tenancy = "default"
 
   tags = {
@@ -13,7 +13,7 @@ resource "aws_vpc" "myvpc" {
 
 resource "aws_subnet" "pubsub" {
      vpc_id     = aws_vpc.myvpc.id
-  cidr_block = "10.0.1.0/24"
+  cidr_block    = var.pubsub
 
   tags = {
     Name = "publicsubnet"
@@ -22,7 +22,7 @@ resource "aws_subnet" "pubsub" {
 
 resource "aws_subnet" "privsub" {
      vpc_id     = aws_vpc.myvpc.id
-  cidr_block = "10.0.2.0/24"
+  cidr_block    = var.privsub
 
   tags = {
     Name = "privatesubnet"
@@ -41,7 +41,7 @@ resource "aws_route_table" "pubrt" {
       vpc_id = aws_vpc.myvpc.id
     
     route {
-      cidr_block = "0.0.0.0/0"
+      cidr_block = var.pubrt
       gateway_id = aws_internet_gateway.tigw.id
     }
 
@@ -67,7 +67,7 @@ resource "aws_nat_gateway" "tnat" {
       vpc_id = aws_vpc.myvpc.id
     
     route {
-      cidr_block = "0.0.0.0/0"
+      cidr_block = var.privrt
       gateway_id = aws_nat_gateway.tnat.id
     }
   tags = {
@@ -116,8 +116,8 @@ resource "aws_security_group" "allow_all" {
 }
 
 resource "aws_instance" "public" {
-  ami                         =  "ami-0bd6906508e74f692"
-  instance_type               =  "t2.micro"  
+  ami                         =  var.ami
+  instance_type               =  var.instance_type 
   subnet_id                   =  aws_subnet.pubsub.id
   key_name                    =  "new"
   vpc_security_group_ids      =  ["${aws_security_group.allow_all.id}"]
@@ -131,7 +131,6 @@ resource "aws_instance" "public" {
              systemctl enable httpd
              echo "<!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -139,16 +138,13 @@ resource "aws_instance" "public" {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
-
     body {
       margin: 0;
       box-sizing: border-box;
     }
-
     .container {
       line-height: 150%;
     }
-
     .header {
       display: flex;
       justify-content: space-between;
@@ -156,80 +152,67 @@ resource "aws_instance" "public" {
       padding: 15px;
       background-color: #e9e9e9;
     }
-
     .header h1 {
       color: #222222;
       font-size: 30px;
       font-family: 'Pacifico', cursive;
     }
-
     .header .social a {
       padding: 0 5px;
       color: #222222;
     }
-
     .left {
       float: left;
       width: 180px;
       margin: 0;
       padding: 1em;
     }
-
     .content {
       margin-left: 190px;
       border-left: 1px solid #d4d4d4;
       padding: 1em;
       overflow: hidden;
     }
-
     ul {
       list-style-type: none;
       margin: 0;
       padding: 0;
       font-family: sans-serif;
     }
-
     li a {
       display: block;
       color: #000;
       padding: 8px 16px;
       text-decoration: none;
     }
-
     li a.active {
       background-color: #84e4e2;
       color: white;
     }
-
     li a:hover:not(.active) {
       background-color: #29292a;
       color: white;
     }
-
     table {
       font-family: arial, sans-serif;
       border-collapse: collapse;
       width: 100%;
       margin: 30px 0;
     }
-
     td,
     th {
       border: 1px solid #dddddd;
       padding: 8px;
     }
-
     tr:nth-child(1) {
       background-color: #84e4e2;
       color: white;
     }
-
     tr td i.fas {
       display: block;
       font-size: 35px;
       text-align: center;
     }
-
     .footer {
       padding: 55px 20px;
       background-color: #2e3550;
@@ -238,7 +221,6 @@ resource "aws_instance" "public" {
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <header class="header">
@@ -295,7 +277,6 @@ resource "aws_instance" "public" {
     <footer class="footer">&copy; Copyright Mr. Camel</footer>
   </div>
 </body>
-
 </html>">/var/www/html/index.html
              EOF 
 
@@ -308,5 +289,4 @@ resource "aws_instance" "private" {
   vpc_security_group_ids      =  ["${aws_security_group.allow_all.id}"]
   
 }
-
 
